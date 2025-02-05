@@ -1,10 +1,8 @@
 name: Trivy Scan GHCR (Latest)
 
 on:
-  # Run the scan daily at 6:19 AM UTC
   schedule:
     - cron: "19 6 * * *"
-  # Allow manual triggering
   workflow_dispatch:
 
 jobs:
@@ -14,14 +12,14 @@ jobs:
       security-events: write
       actions: read
       contents: read
-      packages: read  # Needed to pull from GHCR
+      packages: read  # Required to pull from GHCR
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
+      - name: Log in to GitHub Container Registry (GHCR)
+        run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
       - name: Run Trivy vulnerability scan
         uses: aquasecurity/trivy-action@master
