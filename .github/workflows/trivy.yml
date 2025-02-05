@@ -21,20 +21,35 @@ jobs:
       - name: Log in to GitHub Container Registry (GHCR)
         run: echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u $GITHUB_ACTOR --password-stdin
 
-      - name: Run Trivy vulnerability scan for multiple images
-        run: |
-          images=(
-            "ghcr.io/bsanchezmir/testv3/keycloak:21"
-            "ghcr.io/bsanchezmir/testv3/nginx:1.23.4"
-          )
+      # Scan Keycloak:21
+      - name: Run Trivy vulnerability scan (Keycloak 21)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "ghcr.io/bsanchezmir/testv3/keycloak:21"
+          format: "sarif"
+          output: "trivy-results-keycloak.sarif"
+          severity: "CRITICAL,HIGH,MEDIUM,LOW"
+          ignore-unfixed: true
 
-          for image in "${images[@]}"; do
-            echo "Scanning $image..."
-            trivy image --severity CRITICAL,HIGH,MEDIUM,LOW --ignore-unfixed --format sarif --output "trivy-results.sarif" "$image"
-          done
+      # Scan Nginx:1.23.4
+      - name: Run Trivy vulnerability scan (Nginx 1.23.4)
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "ghcr.io/bsanchezmir/testv3/nginx:1.23.4"
+          format: "sarif"
+          output: "trivy-results-nginx.sarif"
+          severity: "CRITICAL,HIGH,MEDIUM,LOW"
+          ignore-unfixed: true
+
+      # Upload both SARIF files with the same category (so results don't stack)
+      - name: Upload Trivy scan results to GitHub Security tab (Single Category)
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: "trivy-results-keycloak.sarif"
+          category: "trivy-production-images"
 
       - name: Upload Trivy scan results to GitHub Security tab (Single Category)
         uses: github/codeql-action/upload-sarif@v3
         with:
-          sarif_file: "trivy-results.sarif"
-          category: "trivy-production-images"  # Forces overwriting all scans into one report
+          sarif_file: "trivy-results-nginx.sarif"
+          category: "trivy-production-images"
