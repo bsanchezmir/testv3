@@ -24,7 +24,7 @@ jobs:
       - name: Run Trivy vulnerability scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: "ghcr.io/bsanchezmir/testv3/keycloak:latest"
+          image-ref: "ghcr.io/bsanchezmir/testv3/keycloak:26"
           format: "sarif"
           output: "trivy-results.sarif"
           severity: "CRITICAL,HIGH,MEDIUM,LOW"
