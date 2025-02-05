@@ -1,4 +1,4 @@
-name: Trivy Scan GHCR (Matrix + Merged SARIF)
+name: Trivy Scan GHCR (Matrix + CodeQL Merge SARIF)
 
 on:
   schedule:
@@ -46,7 +46,7 @@ jobs:
       - name: Upload SARIF results as artifacts (Unique Artifact Names)
         uses: actions/upload-artifact@v4
         with:
-          name: "sarif-files-${{ env.SAFE_FILENAME }}"
+          name: "trivy-sarif-${{ env.SAFE_FILENAME }}"
           path: "trivy-results-${{ env.SAFE_FILENAME }}.sarif"
 
   merge-and-upload:
@@ -63,12 +63,19 @@ jobs:
         with:
           path: sarif-files
 
-      - name: Merge SARIF files
+      - name: Verify SARIF Files Exist
         run: |
-          jq -s '.[0] * {"runs": ([.[].runs] | add)}' sarif-files/*/*.sarif > merged-trivy-results.sarif
+          if [ -z "$(ls -A sarif-files)" ]; then
+            echo "No SARIF files found, skipping upload."
+            exit 1
+          fi
+
+      - name: Merge SARIF files with `codeql github merge-results`
+        run: |
+          codeql github merge-results --sarif sarif-files/*.sarif --output merged-trivy-results.sarif
 
       - name: Upload Merged Trivy Scan Results to GitHub Security Tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: "merged-trivy-results.sarif"
           category: "trivy-production-images"
