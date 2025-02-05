@@ -27,11 +27,11 @@ jobs:
           image-ref: "ghcr.io/bsanchezmir/testv3/keycloak:21"
           format: "sarif"
           output: "trivy-results.sarif"
-          severity: "CRITICAL,HIGH"
+          severity: "CRITICAL,HIGH,MEDIUM.LOW"
           ignore-unfixed: true
 
       - name: Upload Trivy scan results to GitHub Security tab with Custom Category
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "trivy-results.sarif"
           category: "keycloak-latest"  # Forces overwriting old results
