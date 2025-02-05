@@ -18,8 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - "ghcr.io/bsanchezmir/testv3/keycloak:21"
-          - "ghcr.io/bsanchezmir/testv3/nginx:1.23.4"
+          - "ghcr.io/bsanchezmir/testv3/keycloak:26"
+          - "ghcr.io/bsanchezmir/testv3/nginx:1.27"
 
     steps:
       - name: Checkout Repository
