@@ -76,27 +76,27 @@ jobs:
           curl -Lo codeql.zip https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
           echo "Extracting CodeQL..."
           unzip -q codeql.zip -d codeql
-          echo "Installing CodeQL..."
+          echo "Moving CodeQL to /usr/local/bin..."
           sudo mv codeql/codeql /usr/local/bin/codeql
           sudo chmod +x /usr/local/bin/codeql
-          echo "Adding CodeQL to PATH..."
-          echo "/usr/local/bin" >> $GITHUB_PATH
-          export PATH=$PATH:/usr/local/bin
+          sudo chown runner:docker /usr/local/bin/codeql
           rm -rf codeql.zip codeql
-          echo "CodeQL installation complete."
+          echo "Adding CodeQL to PATH..."
+          echo "export PATH=/usr/local/bin:\$PATH" >> ~/.bashrc
+          source ~/.bashrc
 
       - name: Check if CodeQL is Installed
         run: |
           echo "Checking CodeQL version..."
-          ls -l /usr/local/bin/codeql
-          which codeql
-          echo $PATH
-          codeql --version  # This should now work
+          which codeql || echo "CodeQL not found"
+          ls -l /usr/local/bin/codeql || echo "CodeQL binary missing"
+          echo "Current PATH: $PATH"
+          /usr/local/bin/codeql --version || echo "CodeQL execution failed"
 
       - name: Merge SARIF files with `codeql github merge-results`
         run: |
-          export PATH=$PATH:/usr/local/bin  # Ensure PATH is set in the same shell
-          codeql github merge-results --sarif sarif-files/*.sarif --output merged-trivy-results.sarif
+          export PATH=/usr/local/bin:$PATH  # Ensure PATH is set in the same shell
+          /usr/local/bin/codeql github merge-results --sarif sarif-files/*.sarif --output merged-trivy-results.sarif
 
       - name: Upload Merged Trivy Scan Results to GitHub Security Tab
         uses: github/codeql-action/upload-sarif@v3
