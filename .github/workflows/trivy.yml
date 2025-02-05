@@ -63,12 +63,15 @@ jobs:
         with:
           path: sarif-files
 
-      - name: Verify SARIF Files Exist
+      - name: Verify SARIF Files Exist Before Merging
         run: |
-          if [ -z "$(ls -A sarif-files)" ]; then
-            echo "No SARIF files found, skipping upload."
+          echo "Checking if SARIF files exist..."
+          if [ ! -d "sarif-files" ] || [ -z "$(ls -A sarif-files/*.sarif 2>/dev/null)" ]; then
+            echo "❌ No SARIF files found in sarif-files/. Skipping merge."
             exit 1
           fi
+          echo "✅ SARIF files found:"
+          ls -lh sarif-files/*.sarif
 
       - name: Download and Extract CodeQL CLI
         run: |
