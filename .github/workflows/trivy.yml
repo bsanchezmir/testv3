@@ -33,15 +33,20 @@ jobs:
         with:
           image-ref: "${{ matrix.image }}"
           format: "sarif"
-          output: "trivy-results-${{ matrix.image }}.sarif"
+          output: "trivy-results-${{ matrix.image  }}"  # Replace ":" with "-" in filenames
           severity: "CRITICAL,HIGH,MEDIUM,LOW"
           ignore-unfixed: true
+
+      - name: Rename SARIF file (Fix ":" issue)
+        run: |
+          safe_filename=$(echo "${{ matrix.image }}" | sed 's/:/-/g')
+          mv "trivy-results-${{ matrix.image }}" "trivy-results-$safe_filename.sarif"
 
       - name: Upload SARIF results as artifacts (for merging)
         uses: actions/upload-artifact@v4
         with:
           name: sarif-files
-          path: "trivy-results-${{ matrix.image }}.sarif"
+          path: "trivy-results-$(echo ${{ matrix.image }} | sed 's/:/-/g').sarif"
 
   merge-and-upload:
     needs: scan
