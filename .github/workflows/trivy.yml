@@ -63,15 +63,21 @@ jobs:
         with:
           path: sarif-files
 
+      - name: Move SARIF Files to Root Directory
+        run: |
+          echo "Moving SARIF files to a common location..."
+          find sarif-files -type f -name "*.sarif" -exec mv {} sarif-files/ \;
+          
+          echo "Listing final SARIF file locations..."
+          ls -lh sarif-files/*.sarif
+
       - name: Verify SARIF Files Exist Before Merging
         run: |
-          echo "Checking if SARIF files exist..."
-          if [ ! -d "sarif-files" ] || [ -z "$(ls -A sarif-files/*.sarif 2>/dev/null)" ]; then
-            echo "❌ No SARIF files found in sarif-files/. Skipping merge."
+          if [ -z "$(ls -A sarif-files/*.sarif 2>/dev/null)" ]; then
+            echo "❌ No SARIF files found. Merge cannot proceed."
             exit 1
           fi
-          echo "✅ SARIF files found:"
-          ls -lh sarif-files/*.sarif
+          echo "✅ SARIF files confirmed."
 
       - name: Download and Extract CodeQL CLI
         run: |
@@ -84,9 +90,6 @@ jobs:
           echo "Setting permissions..."
           chmod +x codeql/codeql
           
-          echo "Verifying CodeQL installation..."
-          ls -l codeql/codeql
-          
           rm -f codeql.zip
 
       - name: Check if CodeQL is Installed
@@ -96,6 +99,7 @@ jobs:
 
       - name: Merge SARIF files with `codeql github merge-results`
         run: |
+          echo "Merging SARIF files..."
           ./codeql/codeql github merge-results --sarif sarif-files/*.sarif --output merged-trivy-results.sarif
 
       - name: Upload Merged Trivy Scan Results to GitHub Security Tab
