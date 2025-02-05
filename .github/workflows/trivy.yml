@@ -43,10 +43,10 @@ jobs:
           severity: "CRITICAL,HIGH,MEDIUM,LOW"
           ignore-unfixed: true
 
-      - name: Upload SARIF results as artifacts (for merging)
+      - name: Upload SARIF results as artifacts (Unique Artifact Names)
         uses: actions/upload-artifact@v4
         with:
-          name: sarif-files
+          name: "sarif-files-${{ env.SAFE_FILENAME }}"
           path: "trivy-results-${{ env.SAFE_FILENAME }}.sarif"
 
   merge-and-upload:
@@ -59,14 +59,13 @@ jobs:
 
     steps:
       - name: Download all SARIF artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: sarif-files
           path: sarif-files
 
       - name: Merge SARIF files
         run: |
-          jq -s '.[0] * {"runs": ([.[].runs] | add)}' sarif-files/*.sarif > merged-trivy-results.sarif
+          jq -s '.[0] * {"runs": ([.[].runs] | add)}' sarif-files/*/*.sarif > merged-trivy-results.sarif
 
       - name: Upload Merged Trivy Scan Results to GitHub Security Tab
         uses: github/codeql-action/upload-sarif@v4
