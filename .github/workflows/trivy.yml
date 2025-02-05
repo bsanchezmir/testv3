@@ -76,16 +76,19 @@ jobs:
           curl -Lo codeql.zip https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
           
           echo "Extracting CodeQL..."
-          unzip -q codeql.zip -d codeql
+          unzip -q codeql.zip -d codeql-extracted
+          
+          echo "Finding the correct CodeQL binary..."
+          find codeql-extracted -type f -name "codeql"  # Debugging step
           
           echo "Moving CodeQL binary to /usr/local/bin/"
-          sudo mv codeql/codeql /usr/local/bin/codeql  # Move only the binary
+          sudo mv codeql-extracted/codeql/codeql /usr/local/bin/codeql  # Move only the binary
           
           sudo chmod +x /usr/local/bin/codeql
           sudo chown runner:docker /usr/local/bin/codeql
           
           echo "Cleaning up..."
-          rm -rf codeql.zip codeql
+          rm -rf codeql.zip codeql-extracted
           
           echo "Verifying installation..."
           ls -l /usr/local/bin/codeql
