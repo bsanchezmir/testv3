@@ -100,15 +100,25 @@ jobs:
       - name: Merge SARIF files with `codeql github merge-results`
         run: |
           echo "Preparing SARIF file list..."
-          SARIF_FILES=($(find sarif-files -type f -name "*.sarif"))
-          
-          if [ ${#SARIF_FILES[@]} -eq 0 ]; then
+          SARIF_FILES=$(find sarif-files -type f -name "*.sarif")
+
+          if [ -z "$SARIF_FILES" ]; then
             echo "❌ No SARIF files found. Merge cannot proceed."
             exit 1
           fi
-          
-          echo "Merging SARIF files with CodeQL..."
-          ./codeql/codeql github merge-results --sarif "${SARIF_FILES[@]}" --output merged-trivy-results.sarif
+
+          echo "SARIF files to merge:"
+          echo "$SARIF_FILES"
+
+          # Build the correct command
+          MERGE_CMD="./codeql/codeql github merge-results"
+          for FILE in $SARIF_FILES; do
+            MERGE_CMD+=" --sarif $FILE"
+          done
+          MERGE_CMD+=" --output merged-trivy-results.sarif"
+
+          echo "Running: $MERGE_CMD"
+          eval $MERGE_CMD
 
       - name: Upload Merged Trivy Scan Results to GitHub Security Tab
         uses: github/codeql-action/upload-sarif@v3
