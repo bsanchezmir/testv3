@@ -1,4 +1,4 @@
-name: Trivy Scan GHCR (Matrix + CodeQL Merge SARIF)
+name: Trivy Scan GHCR (Matrix + Merged SARIF)
 
 on:
   schedule:
@@ -33,7 +33,6 @@ jobs:
         run: |
           SAFE_NAME=$(echo "${{ matrix.image }}" | tr '/:' '_')
           echo "SAFE_FILENAME=$SAFE_NAME" >> $GITHUB_ENV
-
       - name: Run Trivy vulnerability scan
         uses: aquasecurity/trivy-action@master
         with:
@@ -46,7 +45,7 @@ jobs:
       - name: Upload SARIF results as artifacts (Unique Artifact Names)
         uses: actions/upload-artifact@v4
         with:
-          name: "trivy-sarif-${{ env.SAFE_FILENAME }}"
+          name: "sarif-files-${{ env.SAFE_FILENAME }}"
           path: "trivy-results-${{ env.SAFE_FILENAME }}.sarif"
 
   merge-and-upload:
@@ -63,63 +62,9 @@ jobs:
         with:
           path: sarif-files
 
-      - name: Move SARIF Files to Root Directory
+      - name: Merge SARIF files
         run: |
-          echo "Moving SARIF files to a common location..."
-          find sarif-files -type f -name "*.sarif" -exec mv {} sarif-files/ \;
-          
-          echo "Listing final SARIF file locations..."
-          ls -lh sarif-files/*.sarif
-
-      - name: Verify SARIF Files Exist Before Merging
-        run: |
-          if [ -z "$(ls -A sarif-files/*.sarif 2>/dev/null)" ]; then
-            echo "❌ No SARIF files found. Merge cannot proceed."
-            exit 1
-          fi
-          echo "✅ SARIF files confirmed."
-
-      - name: Download and Extract CodeQL CLI
-        run: |
-          echo "Downloading CodeQL..."
-          curl -Lo codeql.zip https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
-          
-          echo "Extracting CodeQL..."
-          unzip -q codeql.zip
-          
-          echo "Setting permissions..."
-          chmod +x codeql/codeql
-          
-          rm -f codeql.zip
-
-      - name: Check if CodeQL is Installed
-        run: |
-          echo "Checking CodeQL version..."
-          ./codeql/codeql --version || echo "CodeQL execution failed"
-
-      - name: Merge SARIF files with `codeql github merge-results`
-        run: |
-          echo "Preparing SARIF file list..."
-          SARIF_FILES=$(find sarif-files -type f -name "*.sarif")
-
-          if [ -z "$SARIF_FILES" ]; then
-            echo "❌ No SARIF files found. Merge cannot proceed."
-            exit 1
-          fi
-
-          echo "SARIF files to merge:"
-          echo "$SARIF_FILES"
-
-          # Build the correct command
-          MERGE_CMD="./codeql/codeql github merge-results"
-          for FILE in $SARIF_FILES; do
-            MERGE_CMD+=" --sarif $FILE"
-          done
-          MERGE_CMD+=" --output merged-trivy-results.sarif"
-
-          echo "Running: $MERGE_CMD"
-          eval $MERGE_CMD
-
+          jq -s '.[0] * {"runs": ([.[].runs] | add)}' sarif-files/*/*.sarif > merged-trivy-results.sarif
       - name: Upload Merged Trivy Scan Results to GitHub Security Tab
         uses: github/codeql-action/upload-sarif@v3
         with:
