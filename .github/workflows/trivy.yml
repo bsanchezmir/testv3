@@ -75,7 +75,7 @@ jobs:
           codeql github merge-results --sarif sarif-files/*.sarif --output merged-trivy-results.sarif
 
       - name: Upload Merged Trivy Scan Results to GitHub Security Tab
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: "merged-trivy-results.sarif"
           category: "trivy-production-images"
