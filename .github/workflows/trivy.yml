@@ -33,7 +33,6 @@ jobs:
         run: |
           SAFE_NAME=$(echo "${{ matrix.image }}" | tr '/:' '_')
           echo "SAFE_FILENAME=$SAFE_NAME" >> $GITHUB_ENV
-        shell: bash
 
       - name: Run Trivy vulnerability scan
         uses: aquasecurity/trivy-action@master
@@ -70,22 +69,22 @@ jobs:
             echo "No SARIF files found, skipping upload."
             exit 1
           fi
-        shell: bash
 
-      - name: Download and Extract CodeQL CLI
+      - name: Download and Install CodeQL CLI
         run: |
-          curl -Lo codeql-linux64.zip https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
-          unzip codeql-linux64.zip -d codeql
-          rm codeql-linux64.zip
-        shell: bash
+          curl -Lo codeql.zip https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
+          unzip codeql.zip -d codeql
+          sudo mv codeql/codeql /usr/local/bin/
+          sudo chmod +x /usr/local/bin/codeql
+          rm -rf codeql.zip codeql
+          echo "/usr/local/bin" >> $GITHUB_PATH  # Ensure CodeQL is in PATH
 
-      - name: Add CodeQL to PATH
-        run: echo "${{ github.workspace }}/codeql" >> $GITHUB_PATH
-        shell: bash
+      - name: Check if CodeQL is Installed
+        run: codeql --version  # This should now work
 
-      - name: Merge SARIF files with CodeQL
-        run: codeql github merge-results --sarif sarif-files/*.sarif --output merged-trivy-results.sarif
-        shell: bash
+      - name: Merge SARIF files with `codeql github merge-results`
+        run: |
+          codeql github merge-results --sarif sarif-files/*.sarif --output merged-trivy-results.sarif
 
       - name: Upload Merged Trivy Scan Results to GitHub Security Tab
         uses: github/codeql-action/upload-sarif@v3
