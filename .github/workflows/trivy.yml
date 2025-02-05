@@ -18,8 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - "ghcr.io/bsanchezmir/testv3/keycloak:21"
-          - "ghcr.io/bsanchezmir/testv3/nginx:1.23.4"
+          - "ghcr.io/bsanchezmir/testv3/keycloak-21"
+          - "ghcr.io/bsanchezmir/testv3/nginx-1.23.4"
 
     steps:
       - name: Checkout Repository
@@ -33,7 +33,7 @@ jobs:
         with:
           image-ref: "${{ matrix.image }}"
           format: "sarif"
-          output: "trivy-results-${{ matrix.image | replace(':', '-') }}.sarif"
+          output: "trivy-results-${{ matrix.image }}.sarif"
           severity: "CRITICAL,HIGH,MEDIUM,LOW"
           ignore-unfixed: true
 
@@ -41,7 +41,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: sarif-files
-          path: trivy-results-${{ matrix.image | replace(':', '-') }}.sarif
+          path: "trivy-results-${{ matrix.image }}.sarif"
 
   merge-and-upload:
     needs: scan
