@@ -77,13 +77,11 @@ jobs:
           echo "Extracting CodeQL..."
           unzip -q codeql.zip -d codeql
           echo "Moving CodeQL to /usr/local/bin..."
-          sudo mv codeql/codeql /usr/local/bin/codeql
+          sudo mv codeql/codeql /usr/local/bin/codeql  # Move only the binary, not the folder
           sudo chmod +x /usr/local/bin/codeql
           sudo chown runner:docker /usr/local/bin/codeql
           rm -rf codeql.zip codeql
-          echo "Adding CodeQL to PATH..."
-          echo "export PATH=/usr/local/bin:\$PATH" >> ~/.bashrc
-          source ~/.bashrc
+          echo "CodeQL successfully installed."
 
       - name: Check if CodeQL is Installed
         run: |
@@ -95,7 +93,6 @@ jobs:
 
       - name: Merge SARIF files with `codeql github merge-results`
         run: |
-          export PATH=/usr/local/bin:$PATH  # Ensure PATH is set in the same shell
           /usr/local/bin/codeql github merge-results --sarif sarif-files/*.sarif --output merged-trivy-results.sarif
 
       - name: Upload Merged Trivy Scan Results to GitHub Security Tab
