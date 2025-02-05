@@ -72,18 +72,30 @@ jobs:
 
       - name: Download and Install CodeQL CLI
         run: |
+          echo "Downloading CodeQL..."
           curl -Lo codeql.zip https://github.com/github/codeql-cli-binaries/releases/latest/download/codeql-linux64.zip
-          unzip codeql.zip -d codeql
-          sudo mv codeql/codeql /usr/local/bin/
+          echo "Extracting CodeQL..."
+          unzip -q codeql.zip -d codeql
+          echo "Installing CodeQL..."
+          sudo mv codeql/codeql /usr/local/bin/codeql
           sudo chmod +x /usr/local/bin/codeql
+          echo "Adding CodeQL to PATH..."
+          echo "/usr/local/bin" >> $GITHUB_PATH
+          export PATH=$PATH:/usr/local/bin
           rm -rf codeql.zip codeql
-          echo "/usr/local/bin" >> $GITHUB_PATH  # Ensure CodeQL is in PATH
+          echo "CodeQL installation complete."
 
       - name: Check if CodeQL is Installed
-        run: codeql --version  # This should now work
+        run: |
+          echo "Checking CodeQL version..."
+          ls -l /usr/local/bin/codeql
+          which codeql
+          echo $PATH
+          codeql --version  # This should now work
 
       - name: Merge SARIF files with `codeql github merge-results`
         run: |
+          export PATH=$PATH:/usr/local/bin  # Ensure PATH is set in the same shell
           codeql github merge-results --sarif sarif-files/*.sarif --output merged-trivy-results.sarif
 
       - name: Upload Merged Trivy Scan Results to GitHub Security Tab
